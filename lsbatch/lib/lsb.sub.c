@@ -4774,36 +4774,99 @@ char ch, next, *tmp_str=NULL; \
     putEnv("LSB_SUB_ABORT_VALUE", "97");
     putEnv("LSB_SUB_PARM_FILE", parmFile);
 
-    if ((cc = runEsub_(ed, NULL)) < 0) {
-	if (logclass & LC_TRACE)
-	    ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
-	if (cc == -2) {
-            char *deltaFileName=NULL;
-            struct stat stbuf;
+    cc = 0;
+    char esub_path[MAXFILENAMELEN];
+    char* esub_method = getenv("LSB_ESUB_METHOD");
+    extern char* additionEsubInfo;
 
-	    lsberrno = LSBE_ESUB_ABORT;
-	    unlink(parmFile);
-
-
-            if( (deltaFileName=getenv("LSB_SUB_MODIFY_FILE")) != NULL )
-            {
-                if(stat(deltaFileName, &stbuf)!=ENOENT)
-               	    unlink(deltaFileName);
-            }
-
-            deltaFileName=NULL;
-            if( (deltaFileName=getenv("LSB_SUB_MODIFY_ENVFILE")) != NULL )
-            {
-                if(stat(deltaFileName, &stbuf)!=ENOENT)
+    // 1. 全局 esub
+    snprintf(esub_path, sizeof(esub_path), "%s/esub", lsbParams[LSB_SERVERDIR].paramValue);
+    if (is_executable(esub_path)) {
+        cc = runEsub_(ed, esub_path);
+        if (cc < 0) {
+            if (logclass & LC_TRACE)
+                ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
+            if (cc == -2) {
+                lsberrno = LSBE_ESUB_ABORT;
+                unlink(parmFile);
+                // 清理 LSB_SUB_MODIFY_FILE
+                char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
+                struct stat stbuf;
+                if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
                     unlink(deltaFileName);
+                // 清理 LSB_SUB_MODIFY_ENVFILE
+                deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
+                if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                    unlink(deltaFileName);
+                return -1;
             }
-	    return(-1);
-	}
+            unlink(parmFile);
+            return -1;
+        }
+    }
+
+    // 2. LSB_ESUB_METHOD
+    if (esub_method && strlen(esub_method) > 0) {
+        char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
+        int app_count = split_app_list(esub_method, app_list, MAX_ESUB_LIST);
+        for (int i = 0; i < app_count; ++i) {
+            snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
+            if (is_executable(esub_path)) {
+                cc = runEsub_(ed, esub_path);
+                if (cc < 0) {
+                    if (logclass & LC_TRACE)
+                        ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
+                    if (cc == -2) {
+                        lsberrno = LSBE_ESUB_ABORT;
+                        unlink(parmFile);
+                        char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
+                        struct stat stbuf;
+                        if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                            unlink(deltaFileName);
+                        deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
+                        if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                            unlink(deltaFileName);
+                        return -1;
+                    }
+                    unlink(parmFile);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    // 3. -a 指定
+    if (additionEsubInfo && strlen(additionEsubInfo) > 0) {
+        char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
+        int app_count = split_app_list(additionEsubInfo, app_list, MAX_ESUB_LIST);
+        for (int i = 0; i < app_count; ++i) {
+            snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
+            if (is_executable(esub_path)) {
+                cc = runEsub_(ed, esub_path);
+                if (cc < 0) {
+                    if (logclass & LC_TRACE)
+                        ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
+                    if (cc == -2) {
+                        lsberrno = LSBE_ESUB_ABORT;
+                        unlink(parmFile);
+                        char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
+                        struct stat stbuf;
+                        if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                            unlink(deltaFileName);
+                        deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
+                        if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                            unlink(deltaFileName);
+                        return -1;
+                    }
+                    unlink(parmFile);
+                    return -1;
+                }
+            }
+        }
     }
 
     unlink(parmFile);
-
-    return (0);
+    return 0;
 
 }
 
@@ -5742,4 +5805,25 @@ static void trimSpaces(char *str)
         *ptr = '\0';
         ptr--;
     }
+}
+
+#define MAX_ESUB_LIST 16
+#define MAX_APP_NAME 64
+
+static int split_app_list(const char* str, char arr[][MAX_APP_NAME], int max_count) {
+    int count = 0;
+    if (!str) return 0;
+    char *tmp = strdup(str);
+    char *token = strtok(tmp, " ");
+    while (token && count < max_count) {
+        strncpy(arr[count++], token, MAX_APP_NAME-1);
+        arr[count-1][MAX_APP_NAME-1] = '\0';
+        token = strtok(NULL, " ");
+    }
+    free(tmp);
+    return count;
+}
+static int is_executable(const char* path) {
+    struct stat sbuf;
+    return (stat(path, &sbuf) == 0 && (sbuf.st_mode & S_IXUSR));
 }
