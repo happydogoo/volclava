@@ -66,6 +66,10 @@
 #define EMBED_RESTART      0x10
 #define EMBED_QSUB         0x20
 
+#define MAX_ESUB_LIST 16
+#define MAX_APP_NAME 64 
+
+
 #define PRINT_ERRMSG0(errMsg, fmt)\
     {\
 	if (errMsg == NULL)\
@@ -4809,8 +4813,7 @@ char ch, next, *tmp_str=NULL; \
         }
     }
     
-    #define MAX_ESUB_LIST 16
-    #define MAX_APP_NAME 64 
+    
     
     if (esub_method && strlen(esub_method) > 0) {
         char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
