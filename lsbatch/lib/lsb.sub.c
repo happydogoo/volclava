@@ -162,6 +162,9 @@ static int readOptFile(char *filename, char *childLine);
 static const LSB_SPOOL_INFO_T * chUserCopySpoolFile(const char * srcFile,
 				    spoolOptions_t fileType);
 
+static int split_app_list(const char* str, char arr[][MAX_APP_NAME], int max_count);
+static int is_executable(const char* path);
+
 extern void makeCleanToRunEsub();
 extern char *translateString(char *);
 extern void modifyJobInformation(struct submit *);
@@ -4436,6 +4439,7 @@ checkLimit(int limit, int factor)
         return TRUE;
 }
 
+
 int
 runBatchEsub(struct lenData *ed, struct submit *jobSubReq)
 {
@@ -4804,8 +4808,10 @@ char ch, next, *tmp_str=NULL; \
             return -1;
         }
     }
-
-    // 2. LSB_ESUB_METHOD
+    
+    #define MAX_ESUB_LIST 16
+    #define MAX_APP_NAME 64 
+    
     if (esub_method && strlen(esub_method) > 0) {
         char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
         int app_count = split_app_list(esub_method, app_list, MAX_ESUB_LIST);
@@ -5807,8 +5813,7 @@ static void trimSpaces(char *str)
     }
 }
 
-#define MAX_ESUB_LIST 16
-#define MAX_APP_NAME 64
+
 
 static int split_app_list(const char* str, char arr[][MAX_APP_NAME], int max_count) {
     int count = 0;
