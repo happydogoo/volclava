@@ -4818,7 +4818,8 @@ char ch, next, *tmp_str=NULL; \
     if (esub_method && strlen(esub_method) > 0) {
         char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
         int app_count = split_app_list(esub_method, app_list, MAX_ESUB_LIST);
-        for (int i = 0; i < app_count; ++i) {
+        int i;
+        for (i = 0; i < app_count; ++i) {
             snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
             if (is_executable(esub_path)) {
                 cc = runEsub_(ed, esub_path);
