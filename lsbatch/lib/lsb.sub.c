@@ -4788,52 +4788,52 @@ char ch, next, *tmp_str=NULL; \
     extern char* additionEsubInfo;
 
     // 1. 全局 esub
-    snprintf(esub_path, sizeof(esub_path), "%s/esub", lsbParams[LSB_SERVERDIR].paramValue);
-    if (is_executable(esub_path)) {
+//     snprintf(esub_path, sizeof(esub_path), "%s/esub", lsbParams[LSB_SERVERDIR].paramValue);
+//     if (is_executable(esub_path)) {
     
     
-        FILE *testlog = fopen("/tmp/testlog.txt", "a");
-    if (testlog) {
-        fprintf(testlog, "Calling global esub: %s\n", esub_path);
-        fclose(testlog);
-    }
+//         FILE *testlog = fopen("/tmp/testlog.txt", "a");
+//     if (testlog) {
+//         fprintf(testlog, "Calling global esub: %s\n", esub_path);
+//         fclose(testlog);
+//     }
 
 
-        cc = runEsub_(ed, NULL);
-
-
-
-FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
-    if (testlog2) {
-        fprintf(testlog2, "Global esub returned: %d\n", cc);
-        fclose(testlog2);
-    }
+//         cc = runEsub_(ed, NULL);
 
 
 
+// FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
+//     if (testlog2) {
+//         fprintf(testlog2, "Global esub returned: %d\n", cc);
+//         fclose(testlog2);
+//     }
 
 
-        if (cc < 0) {
-            if (logclass & LC_TRACE)
-                ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
-            if (cc == -2) {
-                lsberrno = LSBE_ESUB_ABORT;
-                unlink(parmFile);
-                // 清理 LSB_SUB_MODIFY_FILE
-                char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
-                struct stat stbuf;
-                if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
-                    unlink(deltaFileName);
-                // 清理 LSB_SUB_MODIFY_ENVFILE
-                deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
-                if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
-                    unlink(deltaFileName);
-                return -1;
-            }
-            unlink(parmFile);
-            return -1;
-        }
-    }
+
+
+
+//         if (cc < 0) {
+//             if (logclass & LC_TRACE)
+//                 ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
+//             if (cc == -2) {
+//                 lsberrno = LSBE_ESUB_ABORT;
+//                 unlink(parmFile);
+//                 // 清理 LSB_SUB_MODIFY_FILE
+//                 char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
+//                 struct stat stbuf;
+//                 if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+//                     unlink(deltaFileName);
+//                 // 清理 LSB_SUB_MODIFY_ENVFILE
+//                 deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
+//                 if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+//                     unlink(deltaFileName);
+//                 return -1;
+//             }
+//             unlink(parmFile);
+//             return -1;
+//         }
+//     }
     
     
     
