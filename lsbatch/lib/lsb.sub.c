@@ -4834,8 +4834,17 @@ char ch, next, *tmp_str=NULL; \
 //             return -1;
 //         }
 //     }
-    
-    
+
+
+FILE *testlog = fopen("/tmp/testlog.txt", "a");
+if (testlog) {
+    fprintf(testlog, "esub_method value: '%s'\n", esub_method ? esub_method : "(null)");
+    fclose(testlog);
+}
+
+
+
+
     
     if (esub_method && strlen(esub_method) > 0) {
         char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
@@ -4891,6 +4900,15 @@ char ch, next, *tmp_str=NULL; \
             }
         }
     }
+
+    else {
+    // 没有进入分支，输出判断结果
+    FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
+    if (testlog2) {
+        fprintf(testlog2, "Condition (esub_method && strlen(esub_method) > 0) is FALSE\n");
+        fclose(testlog2);
+    }
+}
 
     // 3. -a 指定
     if (additionEsubInfo && strlen(additionEsubInfo) > 0) {
