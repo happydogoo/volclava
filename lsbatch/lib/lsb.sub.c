@@ -4790,7 +4790,29 @@ char ch, next, *tmp_str=NULL; \
     // 1. 全局 esub
     snprintf(esub_path, sizeof(esub_path), "%s/esub", lsbParams[LSB_SERVERDIR].paramValue);
     if (is_executable(esub_path)) {
-        cc = runEsub_(ed, esub_path);
+    
+    
+        FILE *testlog = fopen("/tmp/testlog.txt", "a");
+    if (testlog) {
+        fprintf(testlog, "Calling global esub: %s\n", esub_path);
+        fclose(testlog);
+    }
+
+
+        cc = runEsub_(ed, NULL);
+
+
+
+FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
+    if (testlog2) {
+        fprintf(testlog2, "Global esub returned: %d\n", cc);
+        fclose(testlog2);
+    }
+
+
+
+
+
         if (cc < 0) {
             if (logclass & LC_TRACE)
                 ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
@@ -4822,7 +4844,32 @@ char ch, next, *tmp_str=NULL; \
         for (i = 0; i < app_count; ++i) {
             snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
             if (is_executable(esub_path)) {
+
+
+
+  FILE *testlog = fopen("/tmp/testlog.txt", "a");
+        if (testlog) {
+            fprintf(testlog, "Calling LSB_ESUB_METHOD esub: %s\n", esub_path);
+            fclose(testlog);
+        }
+
+
+
+
+
+
                 cc = runEsub_(ed, esub_path);
+
+
+
+ FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
+        if (testlog2) {
+            fprintf(testlog2, "LSB_ESUB_METHOD esub %s returned: %d\n", esub_path, cc);
+            fclose(testlog2);
+        }
+
+
+
                 if (cc < 0) {
                     if (logclass & LC_TRACE)
                         ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
@@ -4853,7 +4900,28 @@ char ch, next, *tmp_str=NULL; \
         for (i = 0; i < app_count; ++i) {
             snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
             if (is_executable(esub_path)) {
+
+
+ FILE *testlog = fopen("/tmp/testlog.txt", "a");
+        if (testlog) {
+            fprintf(testlog, "Calling -a esub: %s\n", esub_path);
+            fclose(testlog);
+        }
+
+
+
                 cc = runEsub_(ed, esub_path);
+
+
+
+FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
+        if (testlog2) {
+            fprintf(testlog2, "-a esub %s returned: %d\n", esub_path, cc);
+            fclose(testlog2);
+        }
+
+
+
                 if (cc < 0) {
                     if (logclass & LC_TRACE)
                         ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
