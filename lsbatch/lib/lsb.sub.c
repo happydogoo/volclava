@@ -4785,66 +4785,50 @@ char ch, next, *tmp_str=NULL; \
     cc = 0;
     char esub_path[MAXFILENAMELEN];
     char* esub_method = getenv("LSB_ESUB_METHOD");
+    if(!esub_method) {
+        char buf[1024];
+        FILE* conf = fopen("/etc/lsf.conf", "r");
+        if (conf) {
+            while (fgets(buf, sizeof(buf), conf)) {
+                if (strncmp(buf, "LSB_ESUB_METHOD=", 16) == 0) {
+                    char* val = buf + 16;
+                    val[strcspn(val, "\r\n")] = 0;
+                    setenv("LSB_ESUB_METHOD", val, 1); // 设置为环境变量
+                    esub_method = getenv("LSB_ESUB_METHOD");
+                    break;
+                }
+            }
+            fclose(conf);
+        }
+    }
+
     extern char* additionEsubInfo;
 
-    // 1. 全局 esub
-//     snprintf(esub_path, sizeof(esub_path), "%s/esub", lsbParams[LSB_SERVERDIR].paramValue);
-//     if (is_executable(esub_path)) {
+    snprintf(esub_path, sizeof(esub_path), "%s/esub", lsbParams[LSB_SERVERDIR].paramValue);
+    if (is_executable(esub_path)) {
     
-    
-//         FILE *testlog = fopen("/tmp/testlog.txt", "a");
-//     if (testlog) {
-//         fprintf(testlog, "Calling global esub: %s\n", esub_path);
-//         fclose(testlog);
-//     }
-
-
-//         cc = runEsub_(ed, NULL);
-
-
-
-// FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
-//     if (testlog2) {
-//         fprintf(testlog2, "Global esub returned: %d\n", cc);
-//         fclose(testlog2);
-//     }
-
-
-
-
-
-//         if (cc < 0) {
-//             if (logclass & LC_TRACE)
-//                 ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
-//             if (cc == -2) {
-//                 lsberrno = LSBE_ESUB_ABORT;
-//                 unlink(parmFile);
-//                 // 清理 LSB_SUB_MODIFY_FILE
-//                 char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
-//                 struct stat stbuf;
-//                 if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
-//                     unlink(deltaFileName);
-//                 // 清理 LSB_SUB_MODIFY_ENVFILE
-//                 deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
-//                 if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
-//                     unlink(deltaFileName);
-//                 return -1;
-//             }
-//             unlink(parmFile);
-//             return -1;
-//         }
-//     }
-
-
-FILE *testlog = fopen("/tmp/testlog.txt", "a");
-if (testlog) {
-    fprintf(testlog, "esub_method value: '%s'\n", esub_method ? esub_method : "(null)");
-    fclose(testlog);
-}
-
-
-
-
+        cc = runEsub_(ed, NULL);
+        if (cc < 0) {
+            if (logclass & LC_TRACE)
+                ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
+            if (cc == -2) {
+                lsberrno = LSBE_ESUB_ABORT;
+                unlink(parmFile);
+                // 清理 LSB_SUB_MODIFY_FILE
+                char *deltaFileName = getenv("LSB_SUB_MODIFY_FILE");
+                struct stat stbuf;
+                if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                    unlink(deltaFileName);
+                // 清理 LSB_SUB_MODIFY_ENVFILE
+                deltaFileName = getenv("LSB_SUB_MODIFY_ENVFILE");
+                if (deltaFileName && stat(deltaFileName, &stbuf) != ENOENT)
+                    unlink(deltaFileName);
+                return -1;
+            }
+            unlink(parmFile);
+            return -1;
+        }
+    }
     
     if (esub_method && strlen(esub_method) > 0) {
         char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
@@ -4853,32 +4837,7 @@ if (testlog) {
         for (i = 0; i < app_count; ++i) {
             snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
             if (is_executable(esub_path)) {
-
-
-
-  FILE *testlog = fopen("/tmp/testlog.txt", "a");
-        if (testlog) {
-            fprintf(testlog, "Calling LSB_ESUB_METHOD esub: %s\n", esub_path);
-            fclose(testlog);
-        }
-
-
-
-
-
-
                 cc = runEsub_(ed, esub_path);
-
-
-
- FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
-        if (testlog2) {
-            fprintf(testlog2, "LSB_ESUB_METHOD esub %s returned: %d\n", esub_path, cc);
-            fclose(testlog2);
-        }
-
-
-
                 if (cc < 0) {
                     if (logclass & LC_TRACE)
                         ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
@@ -4902,7 +4861,6 @@ if (testlog) {
     }
 
     else {
-    // 没有进入分支，输出判断结果
     FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
     if (testlog2) {
         fprintf(testlog2, "Condition (esub_method && strlen(esub_method) > 0) is FALSE\n");
@@ -4910,7 +4868,7 @@ if (testlog) {
     }
 }
 
-    // 3. -a 指定
+
     if (additionEsubInfo && strlen(additionEsubInfo) > 0) {
         char app_list[MAX_ESUB_LIST][MAX_APP_NAME];
         int app_count = split_app_list(additionEsubInfo, app_list, MAX_ESUB_LIST);
@@ -4918,28 +4876,7 @@ if (testlog) {
         for (i = 0; i < app_count; ++i) {
             snprintf(esub_path, sizeof(esub_path), "%s/esub.%s", lsbParams[LSB_SERVERDIR].paramValue, app_list[i]);
             if (is_executable(esub_path)) {
-
-
- FILE *testlog = fopen("/tmp/testlog.txt", "a");
-        if (testlog) {
-            fprintf(testlog, "Calling -a esub: %s\n", esub_path);
-            fclose(testlog);
-        }
-
-
-
                 cc = runEsub_(ed, esub_path);
-
-
-
-FILE *testlog2 = fopen("/tmp/testlog.txt", "a");
-        if (testlog2) {
-            fprintf(testlog2, "-a esub %s returned: %d\n", esub_path, cc);
-            fclose(testlog2);
-        }
-
-
-
                 if (cc < 0) {
                     if (logclass & LC_TRACE)
                         ls_syslog(LOG_DEBUG, "%s: runEsub_() failed %d: %M", fname, cc);
